@@ -133,16 +133,15 @@ friedman.test(Perc~Province|Year, data=GoodDF)
 Based on the results of the Friedman test, at least two (2) of the Provincial populations differ. In order to determine which, posthoc analysis using the Nemenyi method will be used.
 
 ```{r}
-library('PMCMRplus')
+library('PMCMR')
 posthoc.friedman.nemenyi.test(Perc~Province|Year,data=GoodDF)
 ```
 
 **bold** PERCEIVED MENTAL HEALTH, FAIR OR POOR **bold**
 
-Import Very Good or Excellent data to analyze and represent visually.
+Import Fair or Poor data to analyze and represent visually.
 
 ```{r}
-library('ggplot2')
 Poor<-read.csv('C:/Users/alba67300/Documents/ZOther/School/CKME136 - Data Analytics Capstone Project/CKME DataSets/Poor.csv',header=TRUE)
 ggplot(data=Good,aes(x=Year,y=Total),) + geom_line(aes(colour=Name)) + labs(y = "Percent") + labs(colour="Province")
 ```
@@ -239,7 +238,6 @@ friedman.test(Perc~Province|Year, data=PoorDF)
 Based on the results of the Friedman test, at least two (2) of the Provincial populations differ. In order to determine which, posthoc analysis using the Nemenyi method will be used.
 
 ```{r}
-library('PMCMRplus')
 posthoc.friedman.nemenyi.test(Perc~Province|Year,data=PoorDF)
 ```
 
