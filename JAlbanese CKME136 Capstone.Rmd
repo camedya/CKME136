@@ -1,0 +1,285 @@
+---
+title: "Capstone Project - Perceived Mental Health"
+author: "J. Albanese"
+date: "March 30, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Data will be analyzed in two sets - Perceived Mental Health, Very Good or Excellent (%) and Perceived Mental Health, Fair or Poor (%). Results will be analyzed in parallel to determine historic mental health trends.
+
+**bold** PERCEIVED MENTAL HEALTH, VERY GOOD OR EXCELLENT **bold**
+
+Import Very Good or Excellent data to analyze and represent visually.
+
+```{r}
+library('ggplot2')
+Good<-read.csv('C:/Users/alba67300/Documents/ZOther/School/CKME136 - Data Analytics Capstone Project/CKME DataSets/Good.csv',header=TRUE)
+ggplot(data=Good,aes(x=Year,y=Total),) + geom_line(aes(colour=Name)) + labs(y = "Percent") + labs(colour="Province")
+```
+
+Seperate into individual files by province to determine if a parametric or non-parametric analysis will be conducted. Evaluate normality of the individual datasets and determine if the variances of each dataset can be considered statistically equal to each other.
+
+```{r}
+BCG<-Good[Good$Name=='British Columbia',]
+AG<-Good[Good$Name=='Alberta',]
+SG<-Good[Good$Name=='Saskatchewan',]
+MG<-Good[Good$Name=='Manitoba',]
+OG<-Good[Good$Name=='Ontario',]
+QG<-Good[Good$Name=='Quebec',]
+NBG<-Good[Good$Name=='New Brunswick',]
+NSG<-Good[Good$Name=='Nova Scotia',]
+PEIG<-Good[Good$Name=='Prince Edward Island',]
+NG<-Good[Good$Name=='Newfoundland and Labrador',]
+```
+
+Perform Shapiro-Wilk test to determine normality.
+Ho = data is normally distributed
+Ha = data is not normally distributed
+alpha = 0.05
+
+```{r}
+shapiro.test(BCG$Total)
+shapiro.test(AG$Total)
+shapiro.test(SG$Total)
+shapiro.test(MG$Total)
+shapiro.test(OG$Total)
+shapiro.test(QG$Total)
+shapiro.test(NBG$Total)
+shapiro.test(NSG$Total)
+shapiro.test(PEIG$Total)
+shapiro.test(NG$Total)
+```
+
+Based on p-values for each provincial data set as calculated using the Shapiro-Wilk test, each null hypothesis can't be rejected and all datasets are assumed to be normally distributed.
+
+Graphically represent the data to visually confirm data is sufficiently normally distributed.
+
+```{r, echo = FALSE}
+
+par(mfrow=c(3,4))
+plot(density(BCG$Total), main = "British Columbia")
+plot(density(AG$Total), main = "Alberta")
+plot(density(SG$Total), main = "Saskatchewan")
+plot(density(MG$Total), main = "Manitoba")
+plot(density(OG$Total), main = "Ontario")
+plot(density(QG$Total), main = "Quebec")
+plot(density(NBG$Total), main = "New Brunswick")
+plot(density(NSG$Total), main = "Nova Scotia")
+plot(density(PEIG$Total), main = "Prince Edward Island")
+plot(density(NG$Total), main = "Newfoundland")
+
+```
+
+```{r, echo = FALSE}
+
+par(mfrow=c(3,4))
+qqnorm(BCG$Total, main = "British Columbia")
+qqline(BCG$Total,col=2)
+qqnorm(AG$Total, main = "Alberta")
+qqline(AG$Total,col=2)
+qqnorm(SG$Total, main = "Saskatchewan")
+qqline(SG$Total,col=2)
+qqnorm(MG$Total, main = "Manitoba")
+qqline(MG$Total,col=2)
+qqnorm(OG$Total, main = "Ontario")
+qqline(OG$Total,col=2)
+qqnorm(QG$Total, main = "Quebec")
+qqline(QG$Total,col=2)
+qqnorm(NBG$Total, main = "New Brunswick")
+qqline(NBG$Total,col=2)
+qqnorm(NSG$Total, main = "Nova Scotia")
+qqline(NSG$Total,col=2)
+qqnorm(PEIG$Total, main = "Prince Edward Island")
+qqline(PEIG$Total,col=2)
+qqnorm(NG$Total, main = "Newfoundland")
+qqline(NG$Total,col=2)
+
+```
+
+Confirm if dataset variances can be considered equal. Calculate variances of each dataset, determine if variances create a normally distributed dataset and compare, in turn, each variance to the mean of the remaining dataset using an independent two-tailed t-distribution (as it is a small sample size).
+Ho = variance is equal to mean
+Ha = variance is not equal to mean
+alpha = 0.05
+```{r}
+GoodVars<-c(var(BCG$Total),var(AG$Total),var(SG$Total),var(MG$Total),var(OG$Total),var(QG$Total),var(NBG$Total),var(NSG$Total),var(PEIG$Total),var(NG$Total))
+t.test(GoodVars[-1],mu=GoodVars[1])
+t.test(GoodVars[-2],mu=GoodVars[2])
+t.test(GoodVars[-3],mu=GoodVars[3])
+t.test(GoodVars[-4],mu=GoodVars[4])
+t.test(GoodVars[-5],mu=GoodVars[5])
+t.test(GoodVars[-6],mu=GoodVars[6])
+t.test(GoodVars[-7],mu=GoodVars[7])
+t.test(GoodVars[-8],mu=GoodVars[8])
+t.test(GoodVars[-9],mu=GoodVars[9])
+t.test(GoodVars[-10],mu=GoodVars[10])
+```
+
+Looking at the results of the t-tests for the variances, there are five instances were the null hypothesis can be rejected because the p-value is less than the alpha value of 0.05. These rejections indicate that the variances are not statistically equal so a non-parametric test is required to analyze the original dataset.
+
+A Friedman test will be performed to compare the ten (10) different populations and determine if at least two (2) of the ten (10) distributions differ. The years are the blocks (b) and the provinces are the treatments (k).
+Ho = Provincial data sets are all the same
+Ha = at least two of the dataset distributions differ
+alpha = 0.05
+
+```{r}
+GoodDF<-data.frame(Year=as.factor(Good$Year),Province=Good$Name,Perc=Good$Total)
+friedman.test(Perc~Province|Year, data=GoodDF)
+```
+
+Based on the results of the Friedman test, at least two (2) of the Provincial populations differ. In order to determine which, posthoc analysis using the Nemenyi method will be used.
+
+```{r}
+library('PMCMRplus')
+posthoc.friedman.nemenyi.test(Perc~Province|Year,data=GoodDF)
+```
+
+**bold** PERCEIVED MENTAL HEALTH, FAIR OR POOR **bold**
+
+Import Very Good or Excellent data to analyze and represent visually.
+
+```{r}
+library('ggplot2')
+Poor<-read.csv('C:/Users/alba67300/Documents/ZOther/School/CKME136 - Data Analytics Capstone Project/CKME DataSets/Poor.csv',header=TRUE)
+ggplot(data=Good,aes(x=Year,y=Total),) + geom_line(aes(colour=Name)) + labs(y = "Percent") + labs(colour="Province")
+```
+
+Seperate into individual files by province to determine if a parametric or non-parametric analysis will be conducted. Evaluate normality of the individual datasets and determine if the variances of each dataset can be considered statistically equal to each other.
+
+```{r}
+BCP<-Poor[Poor$Name=='British Columbia',]
+AP<-Poor[Poor$Name=='Alberta',]
+SP<-Poor[Poor$Name=='Saskatchewan',]
+MP<-Poor[Poor$Name=='Manitoba',]
+OP<-Poor[Poor$Name=='Ontario',]
+QP<-Poor[Poor$Name=='Quebec',]
+NBP<-Poor[Poor$Name=='New Brunswick',]
+NSP<-Poor[Poor$Name=='Nova Scotia',]
+PEIP<-Poor[Poor$Name=='Prince Edward Island',]
+NP<-Poor[Poor$Name=='Newfoundland and Labrador',]
+```
+
+Perform Shapiro-Wilk test to determine normality.
+Ho = data is normally distributed
+Ha = data is not normally distributed
+alpha = 0.05
+
+```{r}
+shapiro.test(BCP$Total)
+shapiro.test(AP$Total)
+shapiro.test(SP$Total)
+shapiro.test(MP$Total)
+shapiro.test(OP$Total)
+shapiro.test(QP$Total)
+shapiro.test(NBP$Total)
+shapiro.test(NSP$Total)
+shapiro.test(PEIP$Total)
+shapiro.test(NP$Total)
+```
+
+Based on p-values for each provincial data set as calculated using the Shapiro-Wilk test, not all data sets are normally distributed so non-parametric statistical comparisons will be used.
+
+Graphically represent the data to visually confirm not all data is sufficiently normally distributed.
+
+```{r, echo = FALSE}
+
+par(mfrow=c(3,4))
+plot(density(BCP$Total), main = "British Columbia")
+plot(density(AP$Total), main = "Alberta")
+plot(density(SP$Total), main = "Saskatchewan")
+plot(density(MP$Total), main = "Manitoba")
+plot(density(OP$Total), main = "Ontario")
+plot(density(QP$Total), main = "Quebec")
+plot(density(NBP$Total), main = "New Brunswick")
+plot(density(NSP$Total), main = "Nova Scotia")
+plot(density(PEIP$Total), main = "Prince Edward Island")
+plot(density(NP$Total), main = "Newfoundland")
+
+```
+
+```{r, echo = FALSE}
+
+par(mfrow=c(3,4))
+qqnorm(BCP$Total, main = "British Columbia")
+qqline(BCP$Total,col=2)
+qqnorm(AP$Total, main = "Alberta")
+qqline(AP$Total,col=2)
+qqnorm(SP$Total, main = "Saskatchewan")
+qqline(SP$Total,col=2)
+qqnorm(MP$Total, main = "Manitoba")
+qqline(MP$Total,col=2)
+qqnorm(OP$Total, main = "Ontario")
+qqline(OP$Total,col=2)
+qqnorm(QP$Total, main = "Quebec")
+qqline(QP$Total,col=2)
+qqnorm(NBP$Total, main = "New Brunswick")
+qqline(NBP$Total,col=2)
+qqnorm(NSP$Total, main = "Nova Scotia")
+qqline(NSP$Total,col=2)
+qqnorm(PEIP$Total, main = "Prince Edward Island")
+qqline(PEIP$Total,col=2)
+qqnorm(NP$Total, main = "Newfoundland")
+qqline(NP$Total,col=2)
+
+```
+
+A Friedman test will be performed to compare the ten (10) different populations and determine if at least two (2) of the ten (10) distributions differ. The years are the blocks (b) and the provinces are the treatments (k).
+Ho = Provincial data sets are all the same
+Ha = at least two of the dataset distributions differ
+alpha = 0.05
+
+```{r}
+PoorDF<-data.frame(Year=as.factor(Poor$Year),Province=Poor$Name,Perc=Poor$Total)
+friedman.test(Perc~Province|Year, data=PoorDF)
+```
+
+Based on the results of the Friedman test, at least two (2) of the Provincial populations differ. In order to determine which, posthoc analysis using the Nemenyi method will be used.
+
+```{r}
+library('PMCMRplus')
+posthoc.friedman.nemenyi.test(Perc~Province|Year,data=PoorDF)
+```
+
+Lastly, the data sets will be analyzed to determine if there has been a significant increase or decrease in perceived mental health over the last 13 years.
+
+```{r}
+G2003<-Good[Good$Year==2003,]
+G2016<-Good[Good$Year==2016,]
+P2003<-Poor[Poor$Year==2003,]
+P2016<-Poor[Poor$Year==2016,]
+shapiro.test(G2003$Total)
+shapiro.test(G2016$Total)
+shapiro.test(P2003$Total)
+shapiro.test(P2016$Total)
+par(mfrow=c(2,4))
+plot(density(G2003$Total), main = "Good 2003")
+plot(density(G2016$Total), main = "Good 2016")
+plot(density(P2003$Total), main = "Poor 2003")
+plot(density(P2016$Total), main = "Poor 2016")
+qqnorm(G2003$Total, main = "Good 2003")
+qqline(G2003$Total,col=2)
+qqnorm(G2016$Total, main = "Good 2016")
+qqline(G2016$Total,col=2)
+qqnorm(P2003$Total, main = "Poor 2003")
+qqline(P2003$Total,col=2)
+qqnorm(P2016$Total, main = "Poor 2016")
+qqline(P2016$Total,col=2)
+```
+
+Both the Perceived Mental Health Good and Poor show that they are normally distributed so variance calculations will be performed to determine if parametric or non-parametric tests should be performed.
+```{r}
+var(G2003$Total)
+var(G2016$Total)
+var(P2003$Total)
+var(P2016$Total)
+```
+
+Based on that none of the variances are equal, non-parametric comparisons will be used on the Good and Poor data sets.
+```{r}
+wilcox.test(G2003$Total,G2016$Total,paired=TRUE)
+wilcox.test(P2003$Total,P2016$Total,paired=TRUE)
+```
+
