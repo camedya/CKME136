@@ -1,7 +1,7 @@
 ---
 title: "Capstone Project - Perceived Mental Health"
 author: "J. Albanese"
-date: "March 30, 2018"
+date: "April 9, 2018"
 output: pdf_document
 ---
 
@@ -21,19 +21,30 @@ Good<-read.csv('C:/Users/alba67300/Documents/ZOther/School/CKME136 - Data Analyt
 ggplot(data=Good,aes(x=Year,y=Total),) + geom_line(aes(colour=Name)) + labs(y = "Percent") + labs(colour="Province")
 ```
 
-Seperate into individual files by province to determine if a parametric or non-parametric analysis will be conducted. Evaluate normality of the individual datasets and determine if the variances of each dataset can be considered statistically equal to each other.
+First, must review and eliminate possible outliers from each data set. 
 
 ```{r}
-BCG<-Good[Good$Name=='British Columbia',]
-AG<-Good[Good$Name=='Alberta',]
-SG<-Good[Good$Name=='Saskatchewan',]
-MG<-Good[Good$Name=='Manitoba',]
-OG<-Good[Good$Name=='Ontario',]
-QG<-Good[Good$Name=='Quebec',]
-NBG<-Good[Good$Name=='New Brunswick',]
-NSG<-Good[Good$Name=='Nova Scotia',]
-PEIG<-Good[Good$Name=='Prince Edward Island',]
-NG<-Good[Good$Name=='Newfoundland and Labrador',]
+bxplt_Good<-boxplot(Total~Name,data=Good)
+bxplt_Good
+G<-subset(Good,select=-c(Code))
+G$Total[(G$Total==64.7&G$Name == "New Brunswick")] <- quantile(G$Total[G$Name=="New Brunswick"],0.25)-1.5*IQR(G$Total[G$Name=="New Brunswick"])
+G$Total[(G$Total==67.2 & G$Name == "Saskatchewan")] <- quantile(G$Total[G$Name=="Saskatchewan"],0.25)-1.5*IQR(G$Total[G$Name=="Saskatchewan"])
+boxplot(Total~Name,data=G)
+```
+
+Separate into individual files by province to determine if a parametric or non-parametric analysis will be conducted. Evaluate normality of the individual datasets and determine if the variances of each dataset can be considered statistically equal to each other.
+
+```{r}
+BCG<-G[G$Name=='British Columbia',]
+AG<-G[G$Name=='Alberta',]
+SG<-G[G$Name=='Saskatchewan',]
+MG<-G[G$Name=='Manitoba',]
+OG<-G[G$Name=='Ontario',]
+QG<-G[G$Name=='Quebec',]
+NBG<-G[G$Name=='New Brunswick',]
+NSG<-G[G$Name=='Nova Scotia',]
+PEIG<-G[G$Name=='Prince Edward Island',]
+NG<-G[G$Name=='Newfoundland and Labrador',]
 ```
 
 Perform Shapiro-Wilk test to determine normality.
@@ -120,22 +131,25 @@ t.test(GoodVars[-10],mu=GoodVars[10])
 
 Looking at the results of the t-tests for the variances, there are five instances were the null hypothesis can be rejected because the p-value is less than the alpha value of 0.05. These rejections indicate that the variances are not statistically equal so a non-parametric test is required to analyze the original dataset.
 
-A Friedman test will be performed to compare the ten (10) different populations and determine if at least two (2) of the ten (10) distributions differ. The years are the blocks (b) and the provinces are the treatments (k).
+A Friedman test will be performed to compare the ten different populations and determine if at least two of the ten (10) distributions differ. The years are the blocks (b) and the provinces are the treatments (k).
 Ho = Provincial data sets are all the same
 Ha = at least two of the dataset distributions differ
 alpha = 0.05
 
 ```{r}
-GoodDF<-data.frame(Year=as.factor(Good$Year),Province=Good$Name,Perc=Good$Total)
+GoodDF<-data.frame(Year=as.factor(G$Year),Province=G$Name,Perc=G$Total,Item=G$Item)
+
 friedman.test(Perc~Province|Year, data=GoodDF)
 ```
 
-Based on the results of the Friedman test, at least two (2) of the Provincial populations differ. In order to determine which, posthoc analysis using the Nemenyi method will be used.
+Based on the results of the Friedman test, where the p-value is less than the alpha value, at least two (2) of the Provincial populations differ. In order to determine which, posthoc analysis using the Nemenyi method will be used.
 
 ```{r}
 library('PMCMR')
 posthoc.friedman.nemenyi.test(Perc~Province|Year,data=GoodDF)
 ```
+
+
 
 **bold** PERCEIVED MENTAL HEALTH, FAIR OR POOR **bold**
 
@@ -143,22 +157,35 @@ Import Fair or Poor data to analyze and represent visually.
 
 ```{r}
 Poor<-read.csv('C:/Users/alba67300/Documents/ZOther/School/CKME136 - Data Analytics Capstone Project/CKME DataSets/Poor.csv',header=TRUE)
-ggplot(data=Good,aes(x=Year,y=Total),) + geom_line(aes(colour=Name)) + labs(y = "Percent") + labs(colour="Province")
+ggplot(data=Poor,aes(x=Year,y=Total),) + geom_line(aes(colour=Name)) + labs(y = "Percent") + labs(colour="Province")
+```
+
+First, must review and eliminate possible outliers from each data set. 
+
+```{r}
+bxplt_Poor<-boxplot(Total~Name,data=Poor)
+bxplt_Poor
+P<-subset(Poor,select=-c(ï..Code))
+P$Total[(P$Total==7.2& P$Name == "Alberta")] <- quantile(P$Total[P$Name=="Alberta"],0.75)+1.5*IQR(P$Total[P$Name=="Alberta"])
+P$Total[(P$Total==8.5& P$Name == "British Columbia")] <- quantile(P$Total[P$Name=="British Columbia"],0.75)+1.5*IQR(P$Total[P$Name=="British Columbia"])
+P$Total[(P$Total==8.7& P$Name == "New Brunswick")] <- quantile(P$Total[P$Name=="New Brunswick"],0.75)+1.5*IQR(P$Total[P$Name=="New Brunswick"])
+P$Total[((P$Total==7.0|P$Total==7.1)&P$Name == "Prince Edward Island")] <- quantile(P$Total[P$Name=="Prince Edward Island"],0.75)+1.5*IQR(P$Total[P$Name=="Prince Edward Island"])
+boxplot(Total~Name,data=P)
 ```
 
 Seperate into individual files by province to determine if a parametric or non-parametric analysis will be conducted. Evaluate normality of the individual datasets and determine if the variances of each dataset can be considered statistically equal to each other.
 
 ```{r}
-BCP<-Poor[Poor$Name=='British Columbia',]
-AP<-Poor[Poor$Name=='Alberta',]
-SP<-Poor[Poor$Name=='Saskatchewan',]
-MP<-Poor[Poor$Name=='Manitoba',]
-OP<-Poor[Poor$Name=='Ontario',]
-QP<-Poor[Poor$Name=='Quebec',]
-NBP<-Poor[Poor$Name=='New Brunswick',]
-NSP<-Poor[Poor$Name=='Nova Scotia',]
-PEIP<-Poor[Poor$Name=='Prince Edward Island',]
-NP<-Poor[Poor$Name=='Newfoundland and Labrador',]
+BCP<-P[P$Name=='British Columbia',]
+AP<-P[P$Name=='Alberta',]
+SP<-P[P$Name=='Saskatchewan',]
+MP<-P[P$Name=='Manitoba',]
+OP<-P[P$Name=='Ontario',]
+QP<-P[P$Name=='Quebec',]
+NBP<-P[P$Name=='New Brunswick',]
+NSP<-P[P$Name=='Nova Scotia',]
+PEIP<-P[P$Name=='Prince Edward Island',]
+NP<-P[P$Name=='Newfoundland and Labrador',]
 ```
 
 Perform Shapiro-Wilk test to determine normality.
@@ -225,29 +252,32 @@ qqline(NP$Total,col=2)
 
 ```
 
-A Friedman test will be performed to compare the ten (10) different populations and determine if at least two (2) of the ten (10) distributions differ. The years are the blocks (b) and the provinces are the treatments (k).
+A Friedman test will be performed to compare the ten different populations and determine if at least two of the ten distributions differ. The years are the blocks (b) and the provinces are the treatments (k).
 Ho = Provincial data sets are all the same
 Ha = at least two of the dataset distributions differ
 alpha = 0.05
 
 ```{r}
-PoorDF<-data.frame(Year=as.factor(Poor$Year),Province=Poor$Name,Perc=Poor$Total)
+PoorDF<-data.frame(Year=as.factor(P$Year),Province=P$Name,Perc=P$Total,Item=P$Item)
+
 friedman.test(Perc~Province|Year, data=PoorDF)
 ```
 
-Based on the results of the Friedman test, at least two (2) of the Provincial populations differ. In order to determine which, posthoc analysis using the Nemenyi method will be used.
+Based on the results of the Friedman test, with a p-value less than the alpha threshold, at least two (2) of the Provincial populations differ. In order to determine which, posthoc analysis using the Nemenyi method will be used.
 
 ```{r}
 posthoc.friedman.nemenyi.test(Perc~Province|Year,data=PoorDF)
 ```
 
+**bold** YEARLY TRENDS **bold**
+
 Lastly, the data sets will be analyzed to determine if there has been a significant increase or decrease in perceived mental health over the last 13 years.
 
 ```{r}
-G2003<-Good[Good$Year==2003,]
-G2016<-Good[Good$Year==2016,]
-P2003<-Poor[Poor$Year==2003,]
-P2016<-Poor[Poor$Year==2016,]
+G2003<-G[G$Year==2003,]
+G2016<-G[G$Year==2016,]
+P2003<-P[P$Year==2003,]
+P2016<-P[P$Year==2016,]
 shapiro.test(G2003$Total)
 shapiro.test(G2016$Total)
 shapiro.test(P2003$Total)
@@ -275,9 +305,65 @@ var(P2003$Total)
 var(P2016$Total)
 ```
 
-Based on that none of the variances are equal, non-parametric comparisons will be used on the Good and Poor data sets.
+As none of the variances are equal, non-parametric comparisons will be used on the Good and Poor data sets.
+Ho = Yearly data sets are the same
+Ha = Datasets differ
+alpha = 0.05
+
 ```{r}
 wilcox.test(G2003$Total,G2016$Total,paired=TRUE)
 wilcox.test(P2003$Total,P2016$Total,paired=TRUE)
 ```
+
+As both p-values are below the threshold of 0.05, the null hypothesis can be rejected and it is determined that there is statistical significance between the values in 2003 and the values in 2016. Modelling these trends in order to predict the percentage of provincial populations that will classify themselves into one of the two categories will be beneficial.
+
+First we will combine the data in order to create a single model for the entire data set. From the combined data set a training and test data set will be created in order to create and evaluate the models. An 80/20 split of the data will be used.
+
+```{r}
+All<-rbind(G,P)
+All_Index<-sample(1:nrow(All),0.8*nrow(All))
+All_Train<-All[All_Index,]
+All_Test<-All[-All_Index,]
+```
+
+In order to determine which of the parameters should be included in the multiple linear regression model, a stepwise analysis of each model type will be conducted to determine prameter significance.
+```{r}
+library(MASS)
+full<-lm(Total~Name+Item+Year,data=All)
+null<-lm(Total~1,data=All)
+stepF<-stepAIC(null,scope=list(lower=null,upper=full),direction="forward",trace=TRUE)
+summary(stepF)
+```
+The model will be expected to evaluated at a 90% confidence interval. With this threshold in place, all parameters (Year, Name, Item) are deemed to be significant as per the stepwise AIC evaluation. The AIC value for the mlr inclusive of all parameters is smallest and therefore the best fit for the data.
+
+Using this data, the model is trained and tested. 
+```{r}
+model_mlr<-lm(Total~Name+Item+Year,data=All_Train)
+predict<-predict(model_mlr,interval="prediction",newdata=All_Test)
+errors<-predict[,"fit"]-All_Test$Total
+hist(errors)
+```
+
+The distribution of errors has a roughly normally distributed shape indicating a good fit. The calculated values using the model and the actual values from the test set will be comapred to determine if they are equal.
+
+Ho = mean of values from model is equal to the mean of values from test set.
+Ha = two sets of values aren't equal
+alpha = 0.05
+
+```{r}
+par(mfrow = c(2,2))
+plot(predict[,"fit"], main = "Predicted Values", ylab = "Percentage (%)")
+plot(All_Test$Total, main = "Actual Values", ylab = "Percentage (%)")
+plot(density(predict[,"fit"]),main = "Predicted Values")
+plot(density(All_Test$Total), main = "Actual Values")
+```
+
+Clearly data is not parametric, so a Wilcoxon Rank Sum test will be used to validate null hypothesis. The data is paired as the values have come from the same parameters.
+
+```{r}
+wilcox.test(predict[,"fit"],All_Test$Total,paired=TRUE)
+```
+
+As the p-value is greated than 0 .05, the null hypothesis holds and the actual values for the data are concluded to be statistically equal to the predicted values from the model. Therefore, the model is a good fit.
+
 
