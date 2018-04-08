@@ -269,7 +269,9 @@ Based on the results of the Friedman test, with a p-value less than the alpha th
 posthoc.friedman.nemenyi.test(Perc~Province|Year,data=PoorDF)
 ```
 
-** ADDITIONAL ANALYSIS - NOT PART OF FINAL PAPER - YEARLY TRENDS **
+
+
+** YEARLY TRENDS **
 
 Lastly, the data sets will be analyzed to determine if there has been a significant increase or decrease in perceived mental health over the last 13 years.
 
@@ -299,23 +301,27 @@ qqline(P2016$Total,col=2)
 
 Both the Perceived Mental Health Good and Poor show that they are normally distributed so variance calculations will be performed to determine if parametric or non-parametric tests should be performed.
 ```{r}
-var(G2003$Total)
-var(G2016$Total)
-var(P2003$Total)
-var(P2016$Total)
+var.test(G2003$Total,G2016$Total)
+var.test(P2003$Total,P2016$Total)
 ```
 
-As none of the variances are equal, non-parametric comparisons will be used on the Good and Poor data sets.
+As the variances are equal, parametric comparisons will be used on the Good and Poor data sets.
 Ho = Yearly data sets are the same
 Ha = Datasets differ
 alpha = 0.05
 
 ```{r}
-wilcox.test(G2003$Total,G2016$Total,paired=TRUE)
-wilcox.test(P2003$Total,P2016$Total,paired=TRUE)
+t.test(G2003$Total,G2016$Total,paired=TRUE)
+t.test(P2003$Total,P2016$Total,paired=TRUE)
 ```
 
-As both p-values are below the threshold of 0.05, the null hypothesis can be rejected and it is determined that there is statistical significance between the values in 2003 and the values in 2016. Modelling these trends in order to predict the percentage of provincial populations that will classify themselves into one of the two categories will be beneficial.
+As both p-values are below the threshold of 0.05, the null hypothesis can be rejected and it is determined that there is statistical significance between the values in 2003 and the values in 2016. 
+
+
+
+** ADDITIONAL MODELLING - NOT PART OF PAPER **
+
+Modelling these trends in order to predict the percentage of provincial populations that will classify themselves into one of the two categories will be beneficial.
 
 First we will combine the data in order to create a single model for the entire data set. From the combined data set a training and test data set will be created in order to create and evaluate the models. An 80/20 split of the data will be used.
 
