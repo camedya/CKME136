@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Data will be analyzed in two sets - Perceived Mental Health, Very Good or Excellent (%) and Perceived Mental Health, Fair or Poor (%). Results will be analyzed in parallel to determine historic mental health trends.
 
-**bold** PERCEIVED MENTAL HEALTH, VERY GOOD OR EXCELLENT **bold**
+** PERCEIVED MENTAL HEALTH, VERY GOOD OR EXCELLENT **
 
 Import Very Good or Excellent data to analyze and represent visually.
 
@@ -151,7 +151,7 @@ posthoc.friedman.nemenyi.test(Perc~Province|Year,data=GoodDF)
 
 
 
-**bold** PERCEIVED MENTAL HEALTH, FAIR OR POOR **bold**
+** PERCEIVED MENTAL HEALTH, FAIR OR POOR **
 
 Import Fair or Poor data to analyze and represent visually.
 
@@ -269,7 +269,7 @@ Based on the results of the Friedman test, with a p-value less than the alpha th
 posthoc.friedman.nemenyi.test(Perc~Province|Year,data=PoorDF)
 ```
 
-**bold** YEARLY TRENDS **bold**
+** ADDITIONAL ANALYSIS - NOT PART OF FINAL PAPER - YEARLY TRENDS **
 
 Lastly, the data sets will be analyzed to determine if there has been a significant increase or decrease in perceived mental health over the last 13 years.
 
@@ -336,6 +336,8 @@ summary(stepF)
 ```
 The model will be expected to evaluated at a 90% confidence interval. With this threshold in place, all parameters (Year, Name, Item) are deemed to be significant as per the stepwise AIC evaluation. The AIC value for the mlr inclusive of all parameters is smallest and therefore the best fit for the data.
 
+Interesting to note is that Quebec is the only province with a positive mental wellbeing trend as captured by it's positive coefficient. All other provinces have negative coefficients which indicate that they have negative mental wellbeing trends year to year.
+
 Using this data, the model is trained and tested. 
 ```{r}
 model_mlr<-lm(Total~Name+Item+Year,data=All_Train)
@@ -364,6 +366,14 @@ Clearly data is not parametric, so a Wilcoxon Rank Sum test will be used to vali
 wilcox.test(predict[,"fit"],All_Test$Total,paired=TRUE)
 ```
 
-As the p-value is greated than 0 .05, the null hypothesis holds and the actual values for the data are concluded to be statistically equal to the predicted values from the model. Therefore, the model is a good fit.
+As the p-value is greated than 0 .05, the null hypothesis holds and the actual values for the data are concluded to be statistically equal to the predicted values from the model. Therefore, the model is a good fit and can be used to predict future perceived provincial mental wellbeing.
+
+```{r}
+Predict2017<-read.csv('C:/Users/alba67300/Documents/ZOther/School/CKME136 - Data Analytics Capstone Project/CKME DataSets/2017Predict.csv',header=TRUE)
+Cal2017<-predict(model_mlr,interval="prediction",newdata=Predict2017)
+Bind2017<-cbind(Predict2017,Cal2017)
+Bind2017
+```
+
 
 
